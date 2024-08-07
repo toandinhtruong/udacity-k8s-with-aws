@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - pwd && ls
+   ##   - echo "Unzipping source files..."
+    ## - unzip analytics.zip -d /codebuild/output/src/
+      - cd analytics && pwd && ls
+      - echo "Logging in to Amazon ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 555704943251.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo "Building the Docker image..."
+      - docker build -t image-toantd19 .
+  post_build:
+    commands:
+      - echo "Tagging the Docker image..."
+      - docker tag image-toantd19 555704943251.dkr.ecr.us-east-1.amazonaws.com/image-toantd19:$CODEBUILD_BUILD_NUMBER
+      - echo "Pushing the Docker image..."
+      - docker images
+      - docker push 555704943251.dkr.ecr.us-east-1.amazonaws.com/image-toantd19:$CODEBUILD_BUILD_NUMBER
+
+artifacts:
+  files: []

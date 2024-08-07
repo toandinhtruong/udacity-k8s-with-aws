@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: coworking
+spec:
+  type: LoadBalancer
+  selector:
+    service: coworking
+  ports:
+  - name: "5153"
+    protocol: TCP
+    port: 5153
+    targetPort: 5153
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coworking
+  labels:
+    name: coworking
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: coworking
+  template:
+    metadata:
+      labels:
+        service: coworking
+    spec:
+      containers:
+      - name: coworking
+        image: 555704943251.dkr.ecr.us-east-1.amazonaws.com/image-toantd19:14
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /health_check
+            port: 5153
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /readiness_check
+            port: 5153
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        envFrom:
+        - configMapRef:
+            name: postgresql.data
+        env:
+        # Define the environment variable
+        - name: DB_NAME # Notice that the case is different here
+                                     # from the key name in the ConfigMap.
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql.data         # The ConfigMap this value comes from.
+              key: DB_NAME # The key to fetch.
+        - name: DB_USERNAME # Notice that the case is different here
+                                     # from the key name in the ConfigMap.
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql.data         # The ConfigMap this value comes from.
+              key: DB_USERNAME # The key to fetch.
+        - name: DB_PORT # Notice that the case is different here
+                                     # from the key name in the ConfigMap.
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql.data         # The ConfigMap this value comes from.
+              key: DB_PORT # The key to fetch.
+        - name: DB_HOST # Notice that the case is different here
+                                     # from the key name in the ConfigMap.
+          valueFrom:
+            configMapKeyRef:
+              name: postgresql.data         # The ConfigMap this value comes from.
+              key: DB_HOST # The key to fetch.
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql.password
+              key: DB_PASSWORD
+      restartPolicy: Always
